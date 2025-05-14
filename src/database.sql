@@ -1,5 +1,17 @@
 -- Criação das tabelas principais do sistema Morya (MySQL)
 
+CREATE TABLE niveis_acesso (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    descricao TEXT
+);
+
+-- Inserir níveis de acesso padrão
+INSERT INTO niveis_acesso (nome, descricao) VALUES 
+('administrador', 'Acesso total ao sistema'),
+('gestor', 'Acesso total, exceto deleção de registros'),
+('operador', 'Acesso apenas para visualização e disparo de orçamentos');
+
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -8,11 +20,13 @@ CREATE TABLE usuarios (
     telefone VARCHAR(30),
     cargo VARCHAR(50),
     foto VARCHAR(255),
+    nivel_acesso_id INT NOT NULL,
     smtp_host VARCHAR(100),
     smtp_port INT,
     smtp_user VARCHAR(100),
     smtp_pass VARCHAR(100),
-    smtp_secure VARCHAR(10)
+    smtp_secure VARCHAR(10),
+    FOREIGN KEY (nivel_acesso_id) REFERENCES niveis_acesso(id)
 );
 
 CREATE TABLE fornecedores (

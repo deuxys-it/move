@@ -35,9 +35,9 @@ $nome = $_SESSION['user']['nome'] ?? 'Usuário';
                 </a>
             </div>
             <div class="col">
-                <a href="fornecedores.php" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none">
+                <a href="dash.php" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none">
                     <div class="card-body">
-                        <h5 class="card-title">Fornecedores</h5>
+                        <h5 class="card-title">Dashboard</h5>
                     </div>
                 </a>
             </div>
@@ -49,16 +49,16 @@ $nome = $_SESSION['user']['nome'] ?? 'Usuário';
                 </a>
             </div>
             <div class="col">
-                <a href="https://drive.google.com/drive/folders/13p1pg9iW7s-gg354nSrgsT0l4OTe9BvG" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none">
+                <a href="https://drive.google.com/drive/folders/13p1pg9iW7s-gg354nSrgsT0l4OTe9BvG" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none" target="_blank">
                     <div class="card-body">
                         <h5 class="card-title">Plano de Mídia</h5>
                     </div>
                 </a>
             </div>
             <div class="col">
-                <a href="sent.php" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none">
+                <a href="#" class="card bg-light text-dark text-center p-4 h-100 text-decoration-none">
                     <div class="card-body">
-                        <h5 class="card-title">Histórico</h5>
+                        <h5 class="card-title">Checagem de Orçamento</h5>
                     </div>
                 </a>
             </div>

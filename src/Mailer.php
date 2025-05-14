@@ -70,7 +70,17 @@ class Mailer {
 
                 $mail->isHTML(true);
                 $mail->Subject = $titulo;
-                $mail->Body .= "<br><br>" . ($_SESSION['user']['assinatura'] ?? '');
+                // Adiciona assinatura como imagem, se existir
+                $assinatura = isset($_SESSION['user']['assinatura']) && $_SESSION['user']['assinatura'] ? $_SESSION['user']['assinatura'] : '';
+                if ($assinatura) {
+                    $assinaturaPath = $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($assinatura, '/');
+                    if (file_exists($assinaturaPath)) {
+                        $cid = md5($assinaturaPath);
+                        $mail->addEmbeddedImage($assinaturaPath, $cid);
+                        $corpo .= '<br><br><img src="cid:' . $cid . '" style="max-width:320px; max-height:120px;">';
+                    }
+                }
+                $mail->Body = $corpo;
                 $mail->AltBody = strip_tags($corpo);
 
                 $mail->send();

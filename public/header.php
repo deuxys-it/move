@@ -6,6 +6,19 @@ if (session_status() === PHP_SESSION_NONE) session_start();
         <a href='dashboard.php'><img src='logo.png' class='img-fluid' style='max-width: 100px;'></a>
         <div class='navbar-nav ms-auto'>
             <?php if (isset($_SESSION['user'])): ?>
+                <?php 
+                $current_page = basename($_SERVER['PHP_SELF']);
+                if ($current_page === 'disparo.php' || $current_page === 'certidoes.php'): 
+                ?>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/public/fornecedores.php">Fornecedores</a>
+                </li>
+                <?php if ($current_page === 'disparo.php'): ?>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/public/sent.php">Histórico</a>
+                </li>
+                <?php endif; ?>
+                <?php endif; ?>
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <?php if (!empty($_SESSION['user']['foto'])): ?>
@@ -17,6 +30,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="minha_conta.php">Minha Conta</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                                      <li><a class="dropdown-item" href="criar_usuario.php">Cadastre</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="logout.php">Sair</a></li>
                     </ul>

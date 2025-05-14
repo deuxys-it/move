@@ -12,27 +12,19 @@ $user = $_SESSION['user'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $user['id'];
     $foto = $user['foto'] ?? null;
-    $assinatura = $user['assinatura'] ?? null;
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
         $fotoPath = 'assinaturas/' . uniqid('foto_') . '.' . $ext;
         move_uploaded_file($_FILES['foto']['tmp_name'], __DIR__ . '/' . $fotoPath);
         $foto = $fotoPath;
     }
-    if (isset($_FILES['assinatura']) && $_FILES['assinatura']['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($_FILES['assinatura']['name'], PATHINFO_EXTENSION);
-        $assinaturaPath = 'assinatura/' . uniqid('assin_') . '.' . $ext;
-        move_uploaded_file($_FILES['assinatura']['tmp_name'], __DIR__ . '/' . $assinaturaPath);
-        $assinatura = $assinaturaPath;
-    }
-    $stmt = $pdo->prepare('UPDATE usuarios SET nome=?, email=?, telefone=?, cargo=?, foto=?, assinatura=?, smtp_host=?, smtp_port=?, smtp_user=?, smtp_pass=?, smtp_secure=? WHERE id=?');
+    $stmt = $pdo->prepare('UPDATE usuarios SET nome=?, email=?, telefone=?, cargo=?, foto=?, smtp_host=?, smtp_port=?, smtp_user=?, smtp_pass=?, smtp_secure=? WHERE id=?');
     $stmt->execute([
         $_POST['nome'],
         $_POST['email'],
         $_POST['telefone'],
         $_POST['cargo'],
         $foto,
-        $assinatura,
         $_POST['smtp_host'],
         $_POST['smtp_port'],
         $_POST['smtp_user'],
@@ -74,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body class="bg-black text-white min-vh-100 d-flex flex-column">
-<?php include 'header.php'; ?>
+<?php include __DIR__ . '/template/header.php'; ?>
 <main class="container py-5">
     <h1 class="mb-4">Minha Conta</h1>
     <div class="alert alert-info">Para que o disparo de e-mails funcione corretamente, preencha todos os campos de SMTP abaixo com os dados do seu provedor de e-mail. Caso algum campo esteja incorreto, o envio de e-mails não funcionará.</div>
@@ -92,17 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="file" name="foto" class="form-control bg-dark text-white mt-2" accept="image/*">
             </div>
         </div>
-        <div class="col-12 text-center mb-4">
-            <label class="form-label">Assinatura (imagem)</label><br>
-            <?php if (!empty($user['assinatura'])): ?>
-                <img src="<?= htmlspecialchars($user['assinatura']) ?>" style="max-width: 220px; max-height: 80px; border: 1px solid #fff; background: #222;" class="mb-2" alt="Assinatura">
-            <?php else: ?>
-                <img src="https://via.placeholder.com/220x80?text=Assinatura" style="max-width: 220px; max-height: 80px; border: 1px solid #fff; background: #222;" class="mb-2" alt="Assinatura">
-            <?php endif; ?>
-            <div>
-                <input type="file" name="assinatura" class="form-control bg-dark text-white mt-2" accept="image/*">
-            </div>
-        </div>
         <div class="col-12">
             <label class="form-label">Nome</label>
             <input type="text" name="nome" class="form-control bg-dark text-white" value="<?= htmlspecialchars($user['nome'] ?? '') ?>" required>
@@ -116,14 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="telefone" class="form-control bg-dark text-white" value="<?= htmlspecialchars($user['telefone'] ?? '') ?>">
         </div>
         <div class="col-12">
-            <label class="form-label">Setor</label>
-            <select name="cargo" class="form-control bg-dark text-white">
-                <option value="criação" <?= (isset($user['cargo']) && $user['cargo'] === 'criação') ? 'selected' : '' ?>>Criação</option>
-                <option value="produção" <?= (isset($user['cargo']) && $user['cargo'] === 'produção') ? 'selected' : '' ?>>Produção</option>
-                <option value="mídia" <?= (isset($user['cargo']) && $user['cargo'] === 'mídia') ? 'selected' : '' ?>>Mídia</option>
-                <option value="atendimento" <?= (isset($user['cargo']) && $user['cargo'] === 'atendimento') ? 'selected' : '' ?>>Atendimento</option>
-                <option value="financeiro" <?= (isset($user['cargo']) && $user['cargo'] === 'financeiro') ? 'selected' : '' ?>>Financeiro</option>
-            </select>
+            <label class="form-label">Cargo</label>
+            <input type="text" name="cargo" class="form-control bg-dark text-white" value="<?= htmlspecialchars($user['cargo'] ?? '') ?>">
         </div>
         <div class="col-12">
             <label class="form-label">SMTP Host</label>
@@ -155,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </form>
 </main>
+<?php include __DIR__ . '/template/footer.php'; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function previewFoto(event) {

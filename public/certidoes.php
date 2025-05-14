@@ -5,6 +5,8 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 require_once __DIR__ . '/../src/db.php';
+require __DIR__ . '/../vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 // Adicionar nova certidão
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_certidao'])) {
@@ -22,10 +24,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_certidao'])) {
     exit;
 }
 
-// Listar fornecedores para o select
+// Importação do arquivo .xlsx de fornecedores
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fornecedores_xlsx'])) {
+    $filePath = $_FILES['fornecedores_xlsx']['tmp_name'];
+    $spreadsheet = IOFactory::load($filePath);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray();
+
+    // Limpa a tabela de fornecedores antes de importar
+    $pdo->exec("DELETE FROM fornecedores");
+
+    // Pula o cabeçalho (primeira linha)
+    for ($i = 1; $i < count($rows); $i++) {
+        $row = $rows[$i];
+        $stmt = $pdo->prepare("INSERT INTO fornecedores (situacao, codigo, tipo, nome, razao_social, rede, praca, cnpj, estado, grupo_pdi, conta_passivo, conta_despesa, centro_custo_despesa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $row[0], // Situação
+            $row[1], // Código
+            $row[2], // Tipo
+            $row[3], // Nome
+            $row[4], // Razão Social
+            $row[5], // Rede
+            $row[6], // Praça
+            $row[7], // CNPJ
+            $row[8], // Estado
+            $row[9], // Grupo de PDI
+            $row[10], // Conta Passivo
+            $row[11], // Conta Despesa
+            $row[12], // Centro de Custo Despesas
+        ]);
+    }
+    header('Location: certidoes.php?import=ok');
+    exit;
+}
+
+// Buscar todos os fornecedores
 $fornecedores = $pdo->query('SELECT id, nome FROM fornecedores ORDER BY nome')->fetchAll();
-// Listar certidões com nome do fornecedor
-$certidoes = $pdo->query('SELECT c.*, f.nome as fornecedor_nome FROM certidoes c JOIN fornecedores f ON c.fornecedor_id = f.id ORDER BY f.nome')->fetchAll();
+// Buscar status das certidões
+$statusCertidoes = [];
+foreach ($fornecedores as $f) {
+    $statusCertidoes[$f['id']] = $pdo->query('SELECT * FROM status_certidoes WHERE fornecedor_id = ' . intval($f['id']))->fetch();
+}
+
+// Função para verificar se o fornecedor tem cada certidão
+function temCertidao($certidao) {
+    return (!empty($certidao) && $certidao !== '-' && $certidao !== null);
+}
+
+// Adicionar fornecedor manualmente
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_fornecedor'])) {
+    $nome = trim($_POST['novo_nome'] ?? '');
+    $email = trim($_POST['novo_email'] ?? '');
+    if ($nome) {
+        $stmt = $pdo->prepare('INSERT INTO fornecedores (nome, email) VALUES (?, ?)');
+        $stmt->execute([$nome, $email]);
+        header('Location: certidoes.php');
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -80,6 +136,9 @@ $certidoes = $pdo->query('SELECT c.*, f.nome as fornecedor_nome FROM certidoes c
             border: 1px solid white;
             box-shadow: none;
         }
+        .table th, .table td {
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body class="bg-black text-white min-vh-100 d-flex flex-column">
@@ -87,65 +146,33 @@ $certidoes = $pdo->query('SELECT c.*, f.nome as fornecedor_nome FROM certidoes c
 
 <main class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Certidões</h1>
+        <h1>Certidões dos Fornecedores</h1>
     </div>
-
     <div class="table-responsive">
         <table class="table table-dark table-striped">
             <thead>
                 <tr>
                     <th>Fornecedor</th>
-                    <th>CNPJ</th>
-                    <th>Certidão Federal</th>
-                    <th>Certidão Estadual</th>
-                    <th>Certidão Municipal</th>
-                    <th>Certidão Trabalhista</th>
-                    <th>Certidão FGTS</th>
-                    <th>Ações</th>
+                    <th>Federal</th>
+                    <th>Estadual</th>
+                    <th>Municipal</th>
+                    <th>Trabalhista</th>
+                    <th>FGTS</th>
+                    <th>SICAF</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($certidoes as $certidao): ?>
+                <?php foreach ($fornecedores as $fornecedor): 
+                    $status = $statusCertidoes[$fornecedor['id']] ?? [];
+                ?>
                 <tr>
-                    <td><?= htmlspecialchars($certidao['fornecedor_nome']) ?></td>
-                    <td><?= htmlspecialchars($certidao['cnpj']) ?></td>
-                    <td>
-                        <a href="<?= htmlspecialchars($certidao['certidao_federal']) ?>" target="_blank" class="btn btn-outline-custom">
-                            Acessar
-                        </a>
-                    </td>
-                    <td>
-                        <a href="<?= htmlspecialchars($certidao['certidao_estadual']) ?>" target="_blank" class="btn btn-outline-custom">
-                            Acessar
-                        </a>
-                    </td>
-                    <td>
-                        <a href="<?= htmlspecialchars($certidao['certidao_municipal']) ?>" target="_blank" class="btn btn-outline-custom">
-                            Acessar
-                        </a>
-                    </td>
-                    <td>
-                        <a href="<?= htmlspecialchars($certidao['certidao_trabalhista']) ?>" target="_blank" class="btn btn-outline-custom">
-                            Acessar
-                        </a>
-                    </td>
-                    <td>
-                        <a href="<?= htmlspecialchars($certidao['certidao_fgts']) ?>" target="_blank" class="btn btn-outline-custom">
-                            Acessar
-                        </a>
-                    </td>
-                    <td>
-                        <button class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#editarCertidaoModal" 
-                                data-id="<?= $certidao['id'] ?>"
-                                data-cnpj="<?= htmlspecialchars($certidao['cnpj']) ?>"
-                                data-federal="<?= htmlspecialchars($certidao['certidao_federal']) ?>"
-                                data-estadual="<?= htmlspecialchars($certidao['certidao_estadual']) ?>"
-                                data-municipal="<?= htmlspecialchars($certidao['certidao_municipal']) ?>"
-                                data-trabalhista="<?= htmlspecialchars($certidao['certidao_trabalhista']) ?>"
-                                data-fgts="<?= htmlspecialchars($certidao['certidao_fgts']) ?>">
-                            Editar
-                        </button>
-                    </td>
+                    <td><?= htmlspecialchars($fornecedor['nome']) ?></td>
+                    <td><?= !empty($status) && $status['certidao_federal'] ? '<span style="color: #0f0; font-size:1.2em;">&#10004;</span>' : '<span style="color: #f00; font-size:1.2em;">&#10008;</span>' ?></td>
+                    <td><?= !empty($status) && $status['certidao_estadual'] ? '<span style="color: #0f0; font-size:1.2em;">&#10004;</span>' : '<span style="color: #f00; font-size:1.2em;">&#10008;</span>' ?></td>
+                    <td><?= !empty($status) && $status['certidao_municipal'] ? '<span style="color: #0f0; font-size:1.2em;">&#10004;</span>' : '<span style="color: #f00; font-size:1.2em;">&#10008;</span>' ?></td>
+                    <td><?= !empty($status) && $status['certidao_trabalhista'] ? '<span style="color: #0f0; font-size:1.2em;">&#10004;</span>' : '<span style="color: #f00; font-size:1.2em;">&#10008;</span>' ?></td>
+                    <td><?= !empty($status) && $status['certidao_fgts'] ? '<span style="color: #0f0; font-size:1.2em;">&#10004;</span>' : '<span style="color: #f00; font-size:1.2em;">&#10008;</span>' ?></td>
+                    <td></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
